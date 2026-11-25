@@ -1,0 +1,11 @@
+"""
+GCP Bank App - API Handler Requirements
+"""
+google-cloud-functions==1.4.0
+google-cloud-logging==3.5.0
+google-cloud-secret-manager==2.16.1
+psycopg2-binary==2.9.9
+flask==2.3.3
+gunicorn==21.2.0
+functions-framework==3.4.0
+python-dotenv==1.0.0

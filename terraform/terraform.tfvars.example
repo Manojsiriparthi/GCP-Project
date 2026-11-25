@@ -1,0 +1,42 @@
+# terraform.tfvars - Example configuration file
+# Copy this file and fill in your actual values before running terraform
+
+gcp_project_id = "your-gcp-project-id"
+gcp_region     = "us-central1"
+environment    = "production"
+
+# Cloud SQL Configuration
+db_instance_name = "bank-app-db"
+db_name          = "bank_app"
+db_user          = "postgres"
+db_password      = "YourSecure@Pass123456"  # Change this to a strong password
+db_version       = "15"
+db_tier          = "db-f1-micro"  # For production, use db-custom-2-7680 or higher
+
+# Cloud Functions Configuration
+function_timeout = 60
+function_memory  = 256
+runtime          = "python39"
+
+# Labels
+labels = {
+  "app"         = "gcp-bank-app"
+  "managed_by"  = "terraform"
+  "environment" = "production"
+  "team"        = "engineering"
+}
+
+# Pub/Sub Topics (can be customized)
+pubsub_topics = {
+  "user-notifications" = {
+    description        = "User notification events"
+    retention_duration = "86400s"
+  }
+  "send-email" = {
+    description        = "Email sending tasks"
+    retention_duration = "86400s"
+  }
+}
+
+# IAM - Enable least privilege by default
+enable_least_privilege = true
