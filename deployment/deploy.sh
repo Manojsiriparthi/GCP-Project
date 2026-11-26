@@ -365,16 +365,16 @@ else
         if [ "$BUILD_DIR" == "." ]; then
             # Upload only specific file types from current directory
             log_info "Uploading HTML, JS, CSS, and static files..."
-            gcloud storage cp "*.html" "gs://$FRONTEND_BUCKET/" --project=$GCP_PROJECT_ID --no-clobber 2>&1 | grep -v "skipped" || true
-            gcloud storage cp "*.js" "gs://$FRONTEND_BUCKET/" --project=$GCP_PROJECT_ID --no-clobber 2>&1 | grep -v "skipped" || true
-            gcloud storage cp "*.css" "gs://$FRONTEND_BUCKET/" --project=$GCP_PROJECT_ID --no-clobber 2>&1 | grep -v "skipped" || true
-            gcloud storage cp "public/**" "gs://$FRONTEND_BUCKET/" --recursive --project=$GCP_PROJECT_ID --no-clobber 2>&1 | grep -v "skipped" || true
+            gcloud storage cp "*.html" "gs://$FRONTEND_BUCKET/" --project=$GCP_PROJECT_ID 2>&1 | grep -v "skipped" || true
+            gcloud storage cp "*.js" "gs://$FRONTEND_BUCKET/" --project=$GCP_PROJECT_ID 2>&1 | grep -v "skipped" || true
+            gcloud storage cp "*.css" "gs://$FRONTEND_BUCKET/" --project=$GCP_PROJECT_ID 2>&1 | grep -v "skipped" || true
+            gcloud storage cp "public/**" "gs://$FRONTEND_BUCKET/" --recursive --project=$GCP_PROJECT_ID 2>&1 | grep -v "skipped" || true
         else
+            log_info "Uploading from $BUILD_DIR directory (including subdirectories)..."
             gcloud storage cp "$BUILD_DIR/**" "gs://$FRONTEND_BUCKET/" \
                 --recursive \
                 --project=$GCP_PROJECT_ID \
-                --no-clobber \
-                2>&1 | grep -v "skipped" || true
+                2>&1 | tail -5 || true
         fi
         
         log_success "✓ Frontend files uploaded successfully to Cloud Storage"
