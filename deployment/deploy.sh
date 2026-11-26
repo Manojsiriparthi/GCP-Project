@@ -271,6 +271,7 @@ else
         log_error "package.json not found in $FRONTEND_DIR"
         exit 1
     fi
+fi
 
 section_header "STEP 5: CONFIGURING BUCKET FOR PUBLIC WEB ACCESS"
 
@@ -534,7 +535,7 @@ echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 
-cat > /tmp/deployment_config.sh << EOF
+cat > /tmp/deployment_config.sh << 'EOF'
 #!/bin/bash
 export GCP_PROJECT_ID="$GCP_PROJECT_ID"
 export GCP_REGION="$GCP_REGION"
