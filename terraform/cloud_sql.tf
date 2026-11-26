@@ -70,7 +70,9 @@ resource "google_secret_manager_secret" "db_password" {
   secret_id = "bank-app-db-password"
   labels    = var.labels
 
-  replication {}
+  replication {
+    auto {}
+  }
 
   depends_on = [google_project_service.required_apis]
 }
@@ -87,7 +89,9 @@ resource "google_secret_manager_secret" "db_connection_string" {
   secret_id = "bank-app-db-connection-string"
   labels    = var.labels
 
-  replication {}
+  replication {
+    auto {}
+  }
 
   depends_on = [google_project_service.required_apis]
 }
