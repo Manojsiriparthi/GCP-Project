@@ -166,6 +166,12 @@ log_info "Step 3.1: Initializing Terraform..."
 terraform init -upgrade
 log_success "Terraform initialized"
 
+log_info "Step 3.1b: Cleaning up stale state resources (if any)..."
+# Remove logging metrics from state if they were previously created but are now commented out
+terraform state rm google_logging_metric.transaction_creation 2>/dev/null || true
+terraform state rm google_logging_metric.user_creation 2>/dev/null || true
+log_success "State cleanup completed"
+
 log_info "Step 3.2: Validating Terraform configuration..."
 terraform validate
 log_success "Configuration is valid"
