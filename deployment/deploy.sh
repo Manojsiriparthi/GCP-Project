@@ -33,6 +33,24 @@ section_header() {
     echo -e "${BLUE}=================================================================================${NC}\n"
 }
 
+# Determine script location and project root
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+
+# Try to find the actual project root by looking for git or key markers
+if [ -f "$PROJECT_DIR/.git/config" ]; then
+    # Use git to find root
+    PROJECT_DIR="$(cd "$PROJECT_DIR" && git rev-parse --show-toplevel 2>/dev/null || echo "$PROJECT_DIR")"
+fi
+
+TERRAFORM_DIR="$PROJECT_DIR/terraform"
+FRONTEND_DIR="$PROJECT_DIR/frontend"
+BACKEND_DIR="$PROJECT_DIR/backend"
+DEPLOYMENT_DIR="$PROJECT_DIR/deployment"
+
+log_info "Script location: $SCRIPT_DIR"
+log_info "Project root: $PROJECT_DIR"
+
 section_header "STEP 0: AUTOMATIC AUTHENTICATION SETUP"
 
 log_info "Checking if gcloud CLI is installed..."
@@ -94,11 +112,6 @@ gcloud services enable compute.googleapis.com \
 log_success "APIs enabled successfully"
 
 section_header "STEP 2: CONFIGURING TERRAFORM VARIABLES"
-
-PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-TERRAFORM_DIR="$PROJECT_DIR/terraform"
-FRONTEND_DIR="$PROJECT_DIR/frontend"
-BACKEND_DIR="$PROJECT_DIR/backend"
 
 # Validate that required directories exist
 if [ ! -d "$TERRAFORM_DIR" ]; then
