@@ -171,7 +171,7 @@ terraform validate
 log_success "Configuration is valid"
 
 log_info "Step 3.3: Running terraform plan..."
-terraform plan -out=tfplan -auto-approve
+terraform plan -out=tfplan
 log_success "Plan created successfully"
 
 log_info "Step 3.4: Applying Terraform configuration..."
