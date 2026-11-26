@@ -100,6 +100,25 @@ TERRAFORM_DIR="$PROJECT_DIR/terraform"
 FRONTEND_DIR="$PROJECT_DIR/frontend"
 BACKEND_DIR="$PROJECT_DIR/backend"
 
+# Validate that required directories exist
+if [ ! -d "$TERRAFORM_DIR" ]; then
+    log_error "Terraform directory not found at: $TERRAFORM_DIR"
+    log_error "Make sure you're running this script from the correct location"
+    exit 1
+fi
+
+if [ ! -d "$FRONTEND_DIR" ]; then
+    log_error "Frontend directory not found at: $FRONTEND_DIR"
+    exit 1
+fi
+
+if [ ! -d "$BACKEND_DIR" ]; then
+    log_error "Backend directory not found at: $BACKEND_DIR"
+    exit 1
+fi
+
+log_success "Verified project structure at: $PROJECT_DIR"
+
 GCP_REGION="us-central1"
 GCP_ZONE="${GCP_REGION}-a"
 DB_PASSWORD="India@15081947"
@@ -212,7 +231,22 @@ else
     log_success "Frontend bucket found: $FRONTEND_BUCKET"
     
     log_info "Building frontend application..."
+    log_info "Frontend directory: $FRONTEND_DIR"
+    
+    if [ ! -d "$FRONTEND_DIR" ]; then
+        log_error "Frontend directory not found: $FRONTEND_DIR"
+        exit 1
+    fi
+    
     cd "$FRONTEND_DIR"
+    
+    if [ ! -f "package.json" ]; then
+        log_error "package.json not found in $FRONTEND_DIR"
+        log_error "Current directory: $(pwd)"
+        log_error "Directory contents:"
+        ls -la "$FRONTEND_DIR"
+        exit 1
+    fi
     
     if [ -f "package.json" ]; then
         if [ ! -d "node_modules" ]; then
