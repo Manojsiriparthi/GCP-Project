@@ -84,6 +84,49 @@ if ! command -v terraform &> /dev/null; then
 fi
 log_success "Terraform found"
 
+log_info "Checking if Node.js/npm is installed..."
+if ! command -v npm &> /dev/null; then
+    log_warning "npm not found. Installing Node.js..."
+    
+    # Try to install nodejs
+    if command -v apt-get &> /dev/null; then
+        log_info "Using apt-get to install nodejs..."
+        sudo -A apt-get update -qq
+        sudo -A apt-get install -y -qq nodejs npm 2>/dev/null || {
+            log_error "Failed to install nodejs/npm via apt-get"
+            log_error "Please install Node.js manually from https://nodejs.org/"
+            exit 1
+        }
+    elif command -v yum &> /dev/null; then
+        log_info "Using yum to install nodejs..."
+        sudo -A yum install -y nodejs npm 2>/dev/null || {
+            log_error "Failed to install nodejs/npm via yum"
+            log_error "Please install Node.js manually from https://nodejs.org/"
+            exit 1
+        }
+    elif command -v brew &> /dev/null; then
+        log_info "Using brew to install nodejs..."
+        brew install node 2>/dev/null || {
+            log_error "Failed to install nodejs/npm via brew"
+            log_error "Please install Node.js manually from https://nodejs.org/"
+            exit 1
+        }
+    else
+        log_error "npm not found and no package manager detected"
+        log_error "Please install Node.js from https://nodejs.org/"
+        exit 1
+    fi
+    
+    log_success "Node.js and npm installed successfully"
+fi
+
+# Verify npm works
+if ! npm --version &> /dev/null; then
+    log_error "npm installed but not functional"
+    exit 1
+fi
+log_success "npm found ($(npm --version))"
+
 log_info "Retrieving current GCP project..."
 GCP_PROJECT_ID=$(gcloud config get-value project 2>/dev/null)
 if [ -z "$GCP_PROJECT_ID" ]; then
@@ -262,16 +305,22 @@ else
     fi
     
     if [ -f "package.json" ]; then
-        if [ ! -d "node_modules" ]; then
-            log_info "Installing npm dependencies..."
-            npm install --quiet
-            log_success "Dependencies installed"
-        fi
-        
-        if [ ! -d "build" ] && [ ! -d "dist" ]; then
-            log_info "Building production bundle..."
-            npm run build
-            log_success "Frontend built successfully"
+        # Check if we can build the frontend
+        if command -v npm &> /dev/null; then
+            if [ ! -d "node_modules" ]; then
+                log_info "Installing npm dependencies..."
+                npm install --quiet
+                log_success "Dependencies installed"
+            fi
+            
+            if [ ! -d "build" ] && [ ! -d "dist" ]; then
+                log_info "Building production bundle..."
+                npm run build
+                log_success "Frontend built successfully"
+            fi
+        else
+            log_warning "npm not available, skipping npm build"
+            log_info "Will upload existing static files from frontend directory"
         fi
         
         # Determine which build directory exists
@@ -285,28 +334,48 @@ else
         fi
         
         if [ -z "$BUILD_DIR" ]; then
-            log_error "No build output directory found (checked: build/, dist/, public/)"
-            exit 1
+            log_warning "No build output directory found (checked: build/, dist/, public/)"
+            log_warning "Will attempt to upload individual static files from src/"
+            BUILD_DIR="."
         fi
         
-        log_success "Using build directory: $BUILD_DIR"
+        if [ "$BUILD_DIR" == "." ]; then
+            log_success "Using current directory as source"
+            # Count html and js files
+            FILE_COUNT=$(find . -type f \( -name "*.html" -o -name "*.js" -o -name "*.css" -o -name "*.json" -o -name "*.png" -o -name "*.jpg" -o -name "*.svg" \) | wc -l)
+        else
+            log_success "Using build directory: $BUILD_DIR"
+            # Count files
+            FILE_COUNT=$(find "$BUILD_DIR" -type f | wc -l)
+        fi
         
-        # Count files
-        FILE_COUNT=$(find "$BUILD_DIR" -type f | wc -l)
         log_info "Found $FILE_COUNT files to upload"
         
         # List some files
         log_info "Sample files:"
-        find "$BUILD_DIR" -type f | head -10 | sed 's/^/  /'
+        if [ "$BUILD_DIR" == "." ]; then
+            find . -type f \( -name "*.html" -o -name "*.js" -o -name "*.css" \) | head -10 | sed 's/^/  /'
+        else
+            find "$BUILD_DIR" -type f | head -10 | sed 's/^/  /'
+        fi
         
         log_info "Uploading all frontend files to gs://$FRONTEND_BUCKET/..."
         
         # Upload all files recursively with proper handling
-        gcloud storage cp "$BUILD_DIR/**" "gs://$FRONTEND_BUCKET/" \
-            --recursive \
-            --project=$GCP_PROJECT_ID \
-            --no-clobber \
-            2>&1 | grep -v "skipped" || true
+        if [ "$BUILD_DIR" == "." ]; then
+            # Upload only specific file types from current directory
+            log_info "Uploading HTML, JS, CSS, and static files..."
+            gcloud storage cp "*.html" "gs://$FRONTEND_BUCKET/" --project=$GCP_PROJECT_ID --no-clobber 2>&1 | grep -v "skipped" || true
+            gcloud storage cp "*.js" "gs://$FRONTEND_BUCKET/" --project=$GCP_PROJECT_ID --no-clobber 2>&1 | grep -v "skipped" || true
+            gcloud storage cp "*.css" "gs://$FRONTEND_BUCKET/" --project=$GCP_PROJECT_ID --no-clobber 2>&1 | grep -v "skipped" || true
+            gcloud storage cp "public/**" "gs://$FRONTEND_BUCKET/" --recursive --project=$GCP_PROJECT_ID --no-clobber 2>&1 | grep -v "skipped" || true
+        else
+            gcloud storage cp "$BUILD_DIR/**" "gs://$FRONTEND_BUCKET/" \
+                --recursive \
+                --project=$GCP_PROJECT_ID \
+                --no-clobber \
+                2>&1 | grep -v "skipped" || true
+        fi
         
         log_success "✓ Frontend files uploaded successfully to Cloud Storage"
         log_info "Total files uploaded: $FILE_COUNT"
@@ -314,9 +383,6 @@ else
         # Verify upload
         UPLOADED_COUNT=$(gcloud storage ls --recursive "gs://$FRONTEND_BUCKET/" --project=$GCP_PROJECT_ID 2>/dev/null | wc -l)
         log_success "Verified: $UPLOADED_COUNT files in bucket"
-    else
-        log_error "package.json not found in $FRONTEND_DIR"
-        exit 1
     fi
 fi
 
