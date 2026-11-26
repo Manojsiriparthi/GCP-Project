@@ -19,7 +19,7 @@ resource "google_sql_database_instance" "bank_app" {
     }
 
     database_flags {
-      name  = "cloudsql_iam_authentication"
+      name  = "cloudsql.iam_authentication"
       value = "on"
     }
 
@@ -37,7 +37,10 @@ resource "google_sql_database_instance" "bank_app" {
     user_labels = var.labels
   }
 
-  depends_on = [google_project_service.required_apis]
+  depends_on = [
+    google_project_service.required_apis,
+    time_sleep.wait_for_api_propagation
+  ]
 }
 
 # Cloud SQL Database

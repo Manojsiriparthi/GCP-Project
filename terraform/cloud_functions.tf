@@ -10,7 +10,10 @@ resource "google_service_account" "functions_sa" {
   display_name = "Cloud Functions Service Account"
   description  = "Service account for Cloud Functions (processing and notification handlers)"
 
-  depends_on = [google_project_service.required_apis]
+  depends_on = [
+    google_project_service.required_apis,
+    time_sleep.wait_for_api_propagation
+  ]
 }
 
 # Cloud Functions - Pub/Sub Subscriber Role
@@ -18,6 +21,8 @@ resource "google_project_iam_member" "functions_pubsub_subscriber" {
   project = local.project_id
   role    = "roles/pubsub.subscriber"
   member  = "serviceAccount:${google_service_account.functions_sa.email}"
+  
+  depends_on = [time_sleep.wait_for_api_propagation]
 }
 
 # Cloud Functions - Cloud SQL Client Role
@@ -25,6 +30,8 @@ resource "google_project_iam_member" "functions_cloudsql_client" {
   project = local.project_id
   role    = "roles/cloudsql.client"
   member  = "serviceAccount:${google_service_account.functions_sa.email}"
+  
+  depends_on = [time_sleep.wait_for_api_propagation]
 }
 
 # Cloud Functions - Secret Accessor Role
@@ -32,6 +39,8 @@ resource "google_project_iam_member" "functions_secret_accessor" {
   project = local.project_id
   role    = "roles/secretmanager.secretAccessor"
   member  = "serviceAccount:${google_service_account.functions_sa.email}"
+  
+  depends_on = [time_sleep.wait_for_api_propagation]
 }
 
 # Cloud Functions - Logging Writer Role
@@ -39,6 +48,8 @@ resource "google_project_iam_member" "functions_logging_writer" {
   project = local.project_id
   role    = "roles/logging.logWriter"
   member  = "serviceAccount:${google_service_account.functions_sa.email}"
+  
+  depends_on = [time_sleep.wait_for_api_propagation]
 }
 
 # Cloud Functions - Pub/Sub Publisher Role
@@ -46,6 +57,8 @@ resource "google_project_iam_member" "functions_pubsub_publisher" {
   project = local.project_id
   role    = "roles/pubsub.publisher"
   member  = "serviceAccount:${google_service_account.functions_sa.email}"
+  
+  depends_on = [time_sleep.wait_for_api_propagation]
 }
 
 # =============================================================

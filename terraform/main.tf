@@ -51,5 +51,5 @@ resource "google_project_service" "required_apis" {
 # Wait for API propagation before creating resources that depend on these APIs
 resource "time_sleep" "wait_for_api_propagation" {
   depends_on      = [google_project_service.required_apis]
-  create_duration = "30s"
+  create_duration = "90s"
 }

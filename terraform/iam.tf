@@ -4,7 +4,10 @@ resource "google_service_account" "api_handler" {
   display_name = "API Handler Service Account"
   description  = "Service account for API Handler Cloud Function"
 
-  depends_on = [google_project_service.required_apis]
+  depends_on = [
+    google_project_service.required_apis,
+    time_sleep.wait_for_api_propagation
+  ]
 }
 
 # Service Account for Notification Handler
@@ -13,7 +16,10 @@ resource "google_service_account" "notification_handler" {
   display_name = "Notification Handler Service Account"
   description  = "Service account for Notification Handler Cloud Function"
 
-  depends_on = [google_project_service.required_apis]
+  depends_on = [
+    google_project_service.required_apis,
+    time_sleep.wait_for_api_propagation
+  ]
 }
 
 # API Handler - Cloud SQL Client Role
@@ -21,6 +27,8 @@ resource "google_project_iam_member" "api_handler_sql_client" {
   project = local.project_id
   role    = "roles/cloudsql.client"
   member  = "serviceAccount:${google_service_account.api_handler.email}"
+  
+  depends_on = [time_sleep.wait_for_api_propagation]
 }
 
 # API Handler - Logging Writer Role
@@ -28,6 +36,8 @@ resource "google_project_iam_member" "api_handler_logging_writer" {
   project = local.project_id
   role    = "roles/logging.logWriter"
   member  = "serviceAccount:${google_service_account.api_handler.email}"
+  
+  depends_on = [time_sleep.wait_for_api_propagation]
 }
 
 # API Handler - Monitoring Metric Writer Role
@@ -35,6 +45,8 @@ resource "google_project_iam_member" "api_handler_monitoring_writer" {
   project = local.project_id
   role    = "roles/monitoring.metricWriter"
   member  = "serviceAccount:${google_service_account.api_handler.email}"
+  
+  depends_on = [time_sleep.wait_for_api_propagation]
 }
 
 # API Handler - Pub/Sub Publisher Role
@@ -42,6 +54,8 @@ resource "google_project_iam_member" "api_handler_pubsub_publisher" {
   project = local.project_id
   role    = "roles/pubsub.publisher"
   member  = "serviceAccount:${google_service_account.api_handler.email}"
+  
+  depends_on = [time_sleep.wait_for_api_propagation]
 }
 
 # API Handler - Secret Accessor Role
@@ -49,6 +63,8 @@ resource "google_project_iam_member" "api_handler_secret_accessor" {
   project = local.project_id
   role    = "roles/secretmanager.secretAccessor"
   member  = "serviceAccount:${google_service_account.api_handler.email}"
+  
+  depends_on = [time_sleep.wait_for_api_propagation]
 }
 
 # Notification Handler - Cloud SQL Client Role
@@ -56,6 +72,8 @@ resource "google_project_iam_member" "notification_handler_sql_client" {
   project = local.project_id
   role    = "roles/cloudsql.client"
   member  = "serviceAccount:${google_service_account.notification_handler.email}"
+  
+  depends_on = [time_sleep.wait_for_api_propagation]
 }
 
 # Notification Handler - Logging Writer Role
@@ -63,6 +81,8 @@ resource "google_project_iam_member" "notification_handler_logging_writer" {
   project = local.project_id
   role    = "roles/logging.logWriter"
   member  = "serviceAccount:${google_service_account.notification_handler.email}"
+  
+  depends_on = [time_sleep.wait_for_api_propagation]
 }
 
 # Notification Handler - Monitoring Metric Writer Role
@@ -70,6 +90,8 @@ resource "google_project_iam_member" "notification_handler_monitoring_writer" {
   project = local.project_id
   role    = "roles/monitoring.metricWriter"
   member  = "serviceAccount:${google_service_account.notification_handler.email}"
+  
+  depends_on = [time_sleep.wait_for_api_propagation]
 }
 
 # Notification Handler - Pub/Sub Publisher Role
@@ -77,6 +99,8 @@ resource "google_project_iam_member" "notification_handler_pubsub_publisher" {
   project = local.project_id
   role    = "roles/pubsub.publisher"
   member  = "serviceAccount:${google_service_account.notification_handler.email}"
+  
+  depends_on = [time_sleep.wait_for_api_propagation]
 }
 
 # Notification Handler - Secret Accessor Role
@@ -84,6 +108,8 @@ resource "google_project_iam_member" "notification_handler_secret_accessor" {
   project = local.project_id
   role    = "roles/secretmanager.secretAccessor"
   member  = "serviceAccount:${google_service_account.notification_handler.email}"
+  
+  depends_on = [time_sleep.wait_for_api_propagation]
 }
 
 # Outputs
