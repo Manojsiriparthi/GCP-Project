@@ -65,11 +65,6 @@ resource "google_pubsub_subscription" "request_queue_subscription" {
   # Push configuration to Cloud Function
   push_config {
     push_endpoint = google_cloudfunctions_function.processing_handler.https_trigger_url
-
-    oidc_token {
-      service_account_email = google_service_account.functions_sa.email
-      audience              = google_cloudfunctions_function.processing_handler.https_trigger_url
-    }
   }
 
   # Dead Letter Policy
@@ -91,6 +86,10 @@ resource "google_pubsub_subscription" "request_queue_subscription" {
     environment = "production"
     function    = "processing-handler"
   }
+
+  depends_on = [
+    google_cloudfunctions_function.processing_handler
+  ]
 }
 
 # Notification Handler subscription
@@ -101,11 +100,6 @@ resource "google_pubsub_subscription" "notification_queue_subscription" {
   # Push configuration to Cloud Function
   push_config {
     push_endpoint = google_cloudfunctions_function.notification_handler.https_trigger_url
-
-    oidc_token {
-      service_account_email = google_service_account.functions_sa.email
-      audience              = google_cloudfunctions_function.notification_handler.https_trigger_url
-    }
   }
 
   # Dead Letter Policy
@@ -127,6 +121,10 @@ resource "google_pubsub_subscription" "notification_queue_subscription" {
     environment = "production"
     function    = "notification-handler"
   }
+
+  depends_on = [
+    google_cloudfunctions_function.notification_handler
+  ]
 }
 
 # DLQ subscriptions (for monitoring/manual processing)

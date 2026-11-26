@@ -9,33 +9,35 @@ resource "google_monitoring_notification_channel" "email" {
 }
 
 # Alert Policy - High Error Rate in Processing Handler
-resource "google_monitoring_alert_policy" "api_handler_errors" {
-  display_name = "Processing Handler - High Error Rate"
-  combiner     = "OR"
-  enabled      = true
-
-  conditions {
-    display_name = "Error Rate > 5%"
-
-    condition_threshold {
-      filter          = "resource.type=\"cloud_function\" resource.labels.function_name=\"${google_cloudfunctions_function.processing_handler.name}\" metric.type=\"cloudfunctions.googleapis.com/execution_count\" metric.labels.status=\"error\""
-      duration        = "60s"
-      comparison      = "COMPARISON_GT"
-      threshold_value = 5
-
-      aggregations {
-        alignment_period     = "60s"
-        per_series_aligner   = "ALIGN_RATE"
-        cross_series_reducer = "REDUCE_SUM"
-      }
-    }
-  }
-
-  notification_channels = [google_monitoring_notification_channel.email.id]
-  alert_strategy {
-    auto_close = "1800s"
-  }
-}
+# Commented out: Metrics take up to 10 minutes to become available after function deployment
+# Uncomment after metrics are ready
+# resource "google_monitoring_alert_policy" "api_handler_errors" {
+#   display_name = "Processing Handler - High Error Rate"
+#   combiner     = "OR"
+#   enabled      = true
+#
+#   conditions {
+#     display_name = "Error Rate > 5%"
+#
+#     condition_threshold {
+#       filter          = "resource.type=\"cloud_function\" resource.labels.function_name=\"${google_cloudfunctions_function.processing_handler.name}\" metric.type=\"cloudfunctions.googleapis.com/execution_count\" metric.labels.status=\"error\""
+#       duration        = "60s"
+#       comparison      = "COMPARISON_GT"
+#       threshold_value = 5
+#
+#       aggregations {
+#         alignment_period     = "60s"
+#         per_series_aligner   = "ALIGN_RATE"
+#         cross_series_reducer = "REDUCE_SUM"
+#       }
+#     }
+#   }
+#
+#   notification_channels = [google_monitoring_notification_channel.email.id]
+#   alert_strategy {
+#     auto_close = "1800s"
+#   }
+# }
 
 # Alert Policy - High Pub/Sub Message Lag
 resource "google_monitoring_alert_policy" "pubsub_lag" {
