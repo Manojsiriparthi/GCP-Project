@@ -71,7 +71,8 @@ resource "google_secret_manager_secret" "db_password" {
   labels    = var.labels
 
   replication {
-    automatic = true
+    automatic_replication {
+    }
   }
 
   depends_on = [google_project_service.required_apis]
@@ -90,7 +91,8 @@ resource "google_secret_manager_secret" "db_connection_string" {
   labels    = var.labels
 
   replication {
-    automatic = true
+    automatic_replication {
+    }
   }
 
   depends_on = [google_project_service.required_apis]

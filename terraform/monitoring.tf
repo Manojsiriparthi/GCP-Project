@@ -8,9 +8,9 @@ resource "google_monitoring_notification_channel" "email" {
   enabled = true
 }
 
-# Alert Policy - High Error Rate in API Handler
+# Alert Policy - High Error Rate in Processing Handler
 resource "google_monitoring_alert_policy" "api_handler_errors" {
-  display_name = "API Handler - High Error Rate"
+  display_name = "Processing Handler - High Error Rate"
   combiner     = "OR"
   enabled      = true
 
@@ -18,7 +18,7 @@ resource "google_monitoring_alert_policy" "api_handler_errors" {
     display_name = "Error Rate > 5%"
 
     condition_threshold {
-      filter          = "resource.type=\"cloud_function\" resource.labels.function_name=\"${google_cloudfunctions_function.api_handler.name}\" metric.type=\"cloudfunctions.googleapis.com/execution_count\" metric.labels.status=\"error\""
+      filter          = "resource.type=\"cloud_function\" resource.labels.function_name=\"${google_cloudfunctions_function.processing_handler.name}\" metric.type=\"cloudfunctions.googleapis.com/execution_count\" metric.labels.status=\"error\""
       duration        = "60s"
       comparison      = "COMPARISON_GT"
       threshold_value = 5
@@ -104,12 +104,12 @@ resource "google_monitoring_dashboard" "bank_app" {
           width  = 6
           height = 4
           widget = {
-            title = "API Handler - Requests"
+            title = "Processing Handler - Requests"
             xyChart = {
               dataSets = [{
                 timeSeriesQuery = {
                   timeSeriesFilter = {
-                    filter          = "resource.type=\"cloud_function\" resource.labels.function_name=\"${google_cloudfunctions_function.api_handler.name}\" metric.type=\"cloudfunctions.googleapis.com/execution_count\""
+                    filter          = "resource.type=\"cloud_function\" resource.labels.function_name=\"${google_cloudfunctions_function.processing_handler.name}\" metric.type=\"cloudfunctions.googleapis.com/execution_count\""
                     aggregation = {
                       alignmentPeriod  = "60s"
                       perSeriesAligner = "ALIGN_RATE"
@@ -125,12 +125,12 @@ resource "google_monitoring_dashboard" "bank_app" {
           width  = 6
           height = 4
           widget = {
-            title = "API Handler - Errors"
+            title = "Processing Handler - Errors"
             xyChart = {
               dataSets = [{
                 timeSeriesQuery = {
                   timeSeriesFilter = {
-                    filter          = "resource.type=\"cloud_function\" resource.labels.function_name=\"${google_cloudfunctions_function.api_handler.name}\" metric.type=\"cloudfunctions.googleapis.com/execution_count\" metric.labels.status=\"error\""
+                    filter          = "resource.type=\"cloud_function\" resource.labels.function_name=\"${google_cloudfunctions_function.processing_handler.name}\" metric.type=\"cloudfunctions.googleapis.com/execution_count\" metric.labels.status=\"error\""
                     aggregation = {
                       alignmentPeriod  = "60s"
                       perSeriesAligner = "ALIGN_RATE"
