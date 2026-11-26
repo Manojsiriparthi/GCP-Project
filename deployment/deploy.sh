@@ -196,28 +196,114 @@ log_success "Infrastructure deployed"
 
 section_header "STEP 4: UPLOADING FRONTEND TO CLOUD STORAGE"
 
-log_info "Creating Cloud Storage bucket..."
-gsutil mb -l $GCP_REGION "gs://$FRONTEND_BUCKET" 2>/dev/null || log_info "Bucket already exists"
+log_info "Getting frontend bucket from Terraform..."
+FRONTEND_BUCKET=$(terraform output -raw frontend_bucket_name 2>/dev/null || echo "")
 
-log_info "Uploading frontend files..."
-if [ -d "$FRONTEND_DIR/build" ]; then
-    gsutil -m cp -r "$FRONTEND_DIR/build/*" "gs://$FRONTEND_BUCKET/" 2>/dev/null || true
-    log_success "Frontend files uploaded"
-else
-    log_warning "build/ directory not found"
+if [ -z "$FRONTEND_BUCKET" ]; then
+    log_error "Frontend bucket not found in Terraform output"
+    log_info "Attempting to find bucket by name pattern..."
+    FRONTEND_BUCKET=$(gcloud storage ls --project=$GCP_PROJECT_ID 2>/dev/null | grep frontend | head -1 | tr -d ':/' || echo "")
 fi
 
-section_header "STEP 5: ENABLING WEB HOSTING AND PUBLIC ACCESS"
+if [ -z "$FRONTEND_BUCKET" ]; then
+    log_error "Could not locate frontend bucket"
+    log_warning "Skipping frontend upload"
+else
+    log_success "Frontend bucket found: $FRONTEND_BUCKET"
+    
+    log_info "Building frontend application (if needed)..."
+    cd "$FRONTEND_DIR"
+    
+    if [ -f "package.json" ]; then
+        if [ ! -d "node_modules" ]; then
+            log_info "Installing npm dependencies..."
+            npm install --quiet
+            log_success "Dependencies installed"
+        fi
+        
+        if [ ! -d "build" ] && [ ! -d "dist" ]; then
+            log_info "Building production bundle..."
+            npm run build
+            log_success "Frontend built successfully"
+        fi
+        
+        BUILD_DIR="build"
+        if [ ! -d "$BUILD_DIR" ]; then
+            BUILD_DIR="dist"
+        fi
+        if [ ! -d "$BUILD_DIR" ]; then
+            BUILD_DIR="public"
+        fi
+    else
+        BUILD_DIR="public"
+    fi
+    
+    log_info "Uploading frontend files to Cloud Storage..."
+    if [ -d "$BUILD_DIR" ]; then
+        gcloud storage cp "$BUILD_DIR/**" "gs://$FRONTEND_BUCKET/" \
+            --recursive \
+            --project=$GCP_PROJECT_ID \
+            2>/dev/null || log_warning "Some files could not be uploaded"
+        log_success "Frontend files uploaded successfully"
+    else
+        log_error "Build directory not found: $BUILD_DIR"
+    fi
+    
+    cd "$TERRAFORM_DIR"
+fi
 
-log_info "Configuring public access..."
-gsutil iam ch allUsers:objectViewer "gs://$FRONTEND_BUCKET" 2>/dev/null || true
+section_header "STEP 5: CONFIGURING BUCKET FOR PUBLIC WEB ACCESS"
 
-log_info "Setting up web hosting..."
-gsutil web set -m index.html -e 404.html "gs://$FRONTEND_BUCKET" 2>/dev/null || true
-
-FRONTEND_URL="https://storage.googleapis.com/$FRONTEND_BUCKET/index.html"
-log_success "Web hosting enabled"
-log_info "Frontend URL: $FRONTEND_URL"
+if [ -z "$FRONTEND_BUCKET" ]; then
+    log_warning "Frontend bucket not configured. Skipping access setup."
+else
+    log_info "Configuring uniform bucket-level access..."
+    gcloud storage buckets update "gs://$FRONTEND_BUCKET" \
+        --uniform-bucket-level-access \
+        --project=$GCP_PROJECT_ID \
+        2>/dev/null || log_warning "Could not update bucket access settings"
+    
+    log_info "Setting object content types..."
+    # Set content types for common file types
+    gcloud storage objects update "gs://$FRONTEND_BUCKET/index.html" \
+        --content-type="text/html" \
+        --project=$GCP_PROJECT_ID \
+        2>/dev/null || true
+    
+    gcloud storage objects update "gs://$FRONTEND_BUCKET/**.js" \
+        --content-type="application/javascript" \
+        --project=$GCP_PROJECT_ID \
+        2>/dev/null || true
+    
+    gcloud storage objects update "gs://$FRONTEND_BUCKET/**.css" \
+        --content-type="text/css" \
+        --project=$GCP_PROJECT_ID \
+        2>/dev/null || true
+    
+    gcloud storage objects update "gs://$FRONTEND_BUCKET/**.json" \
+        --content-type="application/json" \
+        --project=$GCP_PROJECT_ID \
+        2>/dev/null || true
+    
+    log_info "Adding public read access to bucket..."
+    gcloud storage buckets add-iam-policy-binding "gs://$FRONTEND_BUCKET" \
+        --member=allUsers \
+        --role=roles/storage.objectViewer \
+        --project=$GCP_PROJECT_ID \
+        --quiet \
+        2>/dev/null || log_warning "Could not add public access"
+    
+    log_info "Configuring bucket for web hosting..."
+    gcloud storage buckets update "gs://$FRONTEND_BUCKET" \
+        --web-main-page-suffix=index.html \
+        --web-error-page=404.html \
+        --project=$GCP_PROJECT_ID \
+        2>/dev/null || log_warning "Web hosting configuration had issues"
+    
+    FRONTEND_URL="https://storage.googleapis.com/$FRONTEND_BUCKET/index.html"
+    log_success "Frontend web hosting configured"
+    log_info "Frontend accessible at: $FRONTEND_URL"
+fi
 
 section_header "STEP 6: DEPLOYING BACKEND CLOUD FUNCTIONS"
 
