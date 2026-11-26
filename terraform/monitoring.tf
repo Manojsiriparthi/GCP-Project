@@ -223,11 +223,12 @@ output "monitoring_dashboard_id" {
   value       = google_monitoring_dashboard.bank_app.id
 }
 
-output "alert_policies" {
-  description = "Alert Policies Created"
-  value = {
-    api_handler_errors = google_monitoring_alert_policy.api_handler_errors.id
-    pubsub_lag         = google_monitoring_alert_policy.pubsub_lag.id
-    cloudsql_cpu       = google_monitoring_alert_policy.cloudsql_cpu.id
-  }
-}
+# Alert Policies output - commented out because api_handler_errors is disabled
+# output "alert_policies" {
+#   description = "Alert Policies Created"
+#   value = {
+#     api_handler_errors = google_monitoring_alert_policy.api_handler_errors.id
+#     pubsub_lag         = google_monitoring_alert_policy.pubsub_lag.id
+#     cloudsql_cpu       = google_monitoring_alert_policy.cloudsql_cpu.id
+#   }
+# }
