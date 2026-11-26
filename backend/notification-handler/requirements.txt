@@ -1,4 +1,4 @@
-google-cloud-pubsub==1.14.1
+google-cloud-pubsub==2.18.4
 google-cloud-secret-manager==2.16.4
 psycopg2-binary==2.9.9
 functions-framework==3.5.0
