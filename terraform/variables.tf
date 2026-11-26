@@ -13,6 +13,18 @@ variable "gcp_region" {
   default     = "us-central1"
 }
 
+variable "region" {
+  description = "GCP Region (alias for gcp_region)"
+  type        = string
+  default     = "us-central1"
+}
+
+variable "zone" {
+  description = "GCP Zone"
+  type        = string
+  default     = "us-central1-a"
+}
+
 variable "environment" {
   description = "Environment name"
   type        = string
@@ -21,6 +33,12 @@ variable "environment" {
     condition     = contains(["development", "staging", "production"], var.environment)
     error_message = "Environment must be development, staging, or production."
   }
+}
+
+variable "app_name" {
+  description = "Application name"
+  type        = string
+  default     = "gcp-bank"
 }
 
 # Cloud SQL Configuration
@@ -36,8 +54,21 @@ variable "db_name" {
   default     = "bank_app"
 }
 
+variable "db_database_name" {
+  description = "Database name (alias for db_name)"
+  type        = string
+  default     = "bank_app"
+}
+
 variable "db_user" {
   description = "Database user"
+  type        = string
+  default     = "postgres"
+  sensitive   = true
+}
+
+variable "db_username" {
+  description = "Database username (alias for db_user)"
   type        = string
   default     = "postgres"
   sensitive   = true
@@ -84,6 +115,12 @@ variable "pubsub_topics" {
   }
 }
 
+variable "pubsub_message_retention" {
+  description = "Pub/Sub message retention duration in seconds"
+  type        = number
+  default     = 604800  # 7 days
+}
+
 # Cloud Functions Configuration
 variable "function_timeout" {
   description = "Cloud Function timeout in seconds"
@@ -97,10 +134,48 @@ variable "function_memory" {
   default     = 256
 }
 
+variable "notification_timeout" {
+  description = "Notification Handler timeout in seconds"
+  type        = number
+  default     = 300
+}
+
+variable "notification_memory" {
+  description = "Notification Handler memory in MB"
+  type        = number
+  default     = 256
+}
+
 variable "runtime" {
   description = "Cloud Function runtime"
   type        = string
-  default     = "python39"
+  default     = "python311"
+}
+
+# Storage Configuration
+variable "storage_bucket_name" {
+  description = "Cloud Storage bucket name"
+  type        = string
+  default     = ""
+}
+
+variable "storage_location" {
+  description = "Cloud Storage bucket location"
+  type        = string
+  default     = "us-central1"
+}
+
+# Service Account Configuration
+variable "processing_sa_name" {
+  description = "Processing Handler Service Account name"
+  type        = string
+  default     = "gcp-bank-processing"
+}
+
+variable "notification_sa_name" {
+  description = "Notification Handler Service Account name"
+  type        = string
+  default     = "gcp-bank-notification"
 }
 
 # IAM Configuration
@@ -108,6 +183,26 @@ variable "enable_least_privilege" {
   description = "Enable least privilege IAM roles"
   type        = bool
   default     = true
+}
+
+# Monitoring Configuration
+variable "enable_monitoring" {
+  description = "Enable Cloud Monitoring"
+  type        = bool
+  default     = true
+}
+
+variable "alert_email" {
+  description = "Email address for alert notifications"
+  type        = string
+  default     = "admin@example.com"
+}
+
+# Project ID (from gcloud output)
+variable "project_id" {
+  description = "GCP Project ID (alias for gcp_project_id)"
+  type        = string
+  default     = ""
 }
 
 # Labels

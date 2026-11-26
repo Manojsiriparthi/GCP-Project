@@ -9,9 +9,14 @@ terraform {
   required_version = ">= 1.0"
 }
 
+locals {
+  project_id = var.gcp_project_id != "" ? var.gcp_project_id : var.project_id
+  region     = var.gcp_region != "us-central1" ? var.gcp_region : var.region
+}
+
 provider "google" {
-  project = var.gcp_project_id
-  region  = var.gcp_region
+  project = local.project_id
+  region  = local.region
 }
 
 # Enable required APIs

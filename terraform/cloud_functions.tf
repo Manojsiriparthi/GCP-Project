@@ -15,35 +15,35 @@ resource "google_service_account" "functions_sa" {
 
 # Cloud Functions - Pub/Sub Subscriber Role
 resource "google_project_iam_member" "functions_pubsub_subscriber" {
-  project = var.gcp_project_id
+  project = local.project_id
   role    = "roles/pubsub.subscriber"
   member  = "serviceAccount:${google_service_account.functions_sa.email}"
 }
 
 # Cloud Functions - Cloud SQL Client Role
 resource "google_project_iam_member" "functions_cloudsql_client" {
-  project = var.gcp_project_id
+  project = local.project_id
   role    = "roles/cloudsql.client"
   member  = "serviceAccount:${google_service_account.functions_sa.email}"
 }
 
 # Cloud Functions - Secret Accessor Role
 resource "google_project_iam_member" "functions_secret_accessor" {
-  project = var.gcp_project_id
+  project = local.project_id
   role    = "roles/secretmanager.secretAccessor"
   member  = "serviceAccount:${google_service_account.functions_sa.email}"
 }
 
 # Cloud Functions - Logging Writer Role
 resource "google_project_iam_member" "functions_logging_writer" {
-  project = var.gcp_project_id
+  project = local.project_id
   role    = "roles/logging.logWriter"
   member  = "serviceAccount:${google_service_account.functions_sa.email}"
 }
 
 # Cloud Functions - Pub/Sub Publisher Role
 resource "google_project_iam_member" "functions_pubsub_publisher" {
-  project = var.gcp_project_id
+  project = local.project_id
   role    = "roles/pubsub.publisher"
   member  = "serviceAccount:${google_service_account.functions_sa.email}"
 }
@@ -59,7 +59,7 @@ resource "google_compute_network" "functions_network" {
 
 resource "google_vpc_access_connector" "functions_connector" {
   name          = "functions-connector"
-  region        = var.gcp_region
+  region        = local.region
   network       = google_compute_network.functions_network.name
   ip_cidr_range = "10.8.0.0/28"
   min_instances = 2
@@ -76,7 +76,7 @@ resource "google_cloudfunctions_function" "processing_handler" {
   name        = "processing-handler"
   description = "Process requests from Pub/Sub request-queue topic"
   runtime     = "python311"
-  region      = var.gcp_region
+  region      = local.region
 
   source_archive_bucket = google_storage_bucket.functions_source.name
   source_archive_object = google_storage_bucket_object.processing_handler_source.name
@@ -93,11 +93,11 @@ resource "google_cloudfunctions_function" "processing_handler" {
   max_instances          = 100
 
   environment_variables = {
-    GCP_PROJECT_ID         = var.gcp_project_id
+    GCP_PROJECT_ID         = local.project_id
     CLOUDSQL_HOST          = google_sql_database_instance.bank_app.private_ip_address
     CLOUDSQL_USER          = var.db_user
     CLOUDSQL_DATABASE      = var.db_name
-    FUNCTION_REGION        = var.gcp_region
+    FUNCTION_REGION        = local.region
   }
 
   vpc_connector = google_vpc_access_connector.functions_connector.id
@@ -123,7 +123,7 @@ resource "google_cloudfunctions_function" "notification_handler" {
   name        = "notification-handler"
   description = "Process notifications from Pub/Sub notification-queue topic"
   runtime     = "python311"
-  region      = var.gcp_region
+  region      = local.region
 
   source_archive_bucket = google_storage_bucket.functions_source.name
   source_archive_object = google_storage_bucket_object.notification_handler_source.name
@@ -140,11 +140,11 @@ resource "google_cloudfunctions_function" "notification_handler" {
   max_instances          = 50
 
   environment_variables = {
-    GCP_PROJECT_ID         = var.gcp_project_id
+    GCP_PROJECT_ID         = local.project_id
     CLOUDSQL_HOST          = google_sql_database_instance.bank_app.private_ip_address
     CLOUDSQL_USER          = var.db_user
     CLOUDSQL_DATABASE      = var.db_name
-    FUNCTION_REGION        = var.gcp_region
+    FUNCTION_REGION        = local.region
   }
 
   vpc_connector = google_vpc_access_connector.functions_connector.id
@@ -167,8 +167,8 @@ resource "google_cloudfunctions_function" "notification_handler" {
 # =============================================================
 
 resource "google_storage_bucket" "functions_source" {
-  name          = "${var.gcp_project_id}-function-source-${random_id.bucket_suffix.hex}"
-  location      = var.gcp_region
+  name          = "${local.project_id}-function-source-${random_id.bucket_suffix.hex}"
+  location      = local.region
   force_destroy = true
 
   uniform_bucket_level_access = true

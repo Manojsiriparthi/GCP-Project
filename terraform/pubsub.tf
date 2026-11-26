@@ -66,13 +66,9 @@ resource "google_pubsub_subscription" "request_queue_subscription" {
   push_config {
     push_endpoint = google_cloudfunctions_function.processing_handler.https_trigger_url
 
-    # Authentication for push
-    oidc_token_audience {
-      audience = google_cloudfunctions_function.processing_handler.https_trigger_url
-    }
-
     oidc_token {
       service_account_email = google_service_account.functions_sa.email
+      audience              = google_cloudfunctions_function.processing_handler.https_trigger_url
     }
   }
 
@@ -106,12 +102,9 @@ resource "google_pubsub_subscription" "notification_queue_subscription" {
   push_config {
     push_endpoint = google_cloudfunctions_function.notification_handler.https_trigger_url
 
-    oidc_token_audience {
-      audience = google_cloudfunctions_function.notification_handler.https_trigger_url
-    }
-
     oidc_token {
       service_account_email = google_service_account.functions_sa.email
+      audience              = google_cloudfunctions_function.notification_handler.https_trigger_url
     }
   }
 

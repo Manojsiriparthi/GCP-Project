@@ -2,7 +2,7 @@
 resource "google_sql_database_instance" "bank_app" {
   name             = var.db_instance_name
   database_version = "POSTGRES_${var.db_version}"
-  region           = var.gcp_region
+  region           = local.region
   deletion_protection = var.environment == "production" ? true : false
 
   settings {
@@ -71,8 +71,7 @@ resource "google_secret_manager_secret" "db_password" {
   labels    = var.labels
 
   replication {
-    automatic_replication {
-    }
+    automatic = true
   }
 
   depends_on = [google_project_service.required_apis]
@@ -91,8 +90,7 @@ resource "google_secret_manager_secret" "db_connection_string" {
   labels    = var.labels
 
   replication {
-    automatic_replication {
-    }
+    automatic = true
   }
 
   depends_on = [google_project_service.required_apis]
