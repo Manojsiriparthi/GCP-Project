@@ -17,6 +17,11 @@ locals {
 provider "google" {
   project = local.project_id
   region  = local.region
+  
+  # Request full cloud platform access for all APIs
+  scopes = [
+    "https://www.googleapis.com/auth/cloud-platform"
+  ]
 }
 
 # Enable required APIs
