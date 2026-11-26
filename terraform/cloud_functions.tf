@@ -65,7 +65,10 @@ resource "google_vpc_access_connector" "functions_connector" {
   min_instances = 2
   max_instances = 10
 
-  depends_on = [google_compute_network.functions_network]
+  depends_on = [
+    google_compute_network.functions_network,
+    time_sleep.wait_for_api_propagation
+  ]
 }
 
 # =============================================================

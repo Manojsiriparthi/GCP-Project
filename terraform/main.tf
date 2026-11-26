@@ -4,6 +4,10 @@ terraform {
       source  = "hashicorp/google"
       version = "~> 5.0"
     }
+    time = {
+      source  = "hashicorp/time"
+      version = "~> 0.9"
+    }
   }
 
   required_version = ">= 1.0"
@@ -31,7 +35,7 @@ resource "google_project_service" "required_apis" {
     "cloudfunctions.googleapis.com",
     "cloudbuild.googleapis.com",
     "pubsub.googleapis.com",
-    "cloudlogging.googleapis.com",
+    "logging.googleapis.com",
     "monitoring.googleapis.com",
     "secretmanager.googleapis.com",
     "iam.googleapis.com",
@@ -42,4 +46,10 @@ resource "google_project_service" "required_apis" {
 
   service            = each.value
   disable_on_destroy = false
+}
+
+# Wait for API propagation before creating resources that depend on these APIs
+resource "time_sleep" "wait_for_api_propagation" {
+  depends_on      = [google_project_service.required_apis]
+  create_duration = "30s"
 }
