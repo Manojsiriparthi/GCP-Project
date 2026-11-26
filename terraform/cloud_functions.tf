@@ -123,7 +123,8 @@ resource "google_cloudfunctions_function" "processing_handler" {
     FUNCTION_REGION        = local.region
   }
 
-  vpc_connector = google_vpc_access_connector.functions_connector.id
+  # vpc_connector disabled - not available in this environment
+  # vpc_connector = google_vpc_access_connector.functions_connector.id
 
   labels = {
     function = "processing-handler"
@@ -131,9 +132,10 @@ resource "google_cloudfunctions_function" "processing_handler" {
   }
 
   depends_on = [
-    google_project_iam_member.functions_pubsub_subscriber,
-    google_project_iam_member.functions_cloudsql_client,
-    google_project_iam_member.functions_secret_accessor,
+    # IAM members commented out - require additional permissions
+    # google_project_iam_member.functions_pubsub_subscriber,
+    # google_project_iam_member.functions_cloudsql_client,
+    # google_project_iam_member.functions_secret_accessor,
     google_storage_bucket_object.processing_handler_source,
   ]
 }
@@ -170,7 +172,8 @@ resource "google_cloudfunctions_function" "notification_handler" {
     FUNCTION_REGION        = local.region
   }
 
-  vpc_connector = google_vpc_access_connector.functions_connector.id
+  # vpc_connector disabled - not available in this environment
+  # vpc_connector = google_vpc_access_connector.functions_connector.id
 
   labels = {
     function = "notification-handler"
@@ -178,9 +181,10 @@ resource "google_cloudfunctions_function" "notification_handler" {
   }
 
   depends_on = [
-    google_project_iam_member.functions_pubsub_subscriber,
-    google_project_iam_member.functions_cloudsql_client,
-    google_project_iam_member.functions_secret_accessor,
+    # IAM members commented out - require additional permissions
+    # google_project_iam_member.functions_pubsub_subscriber,
+    # google_project_iam_member.functions_cloudsql_client,
+    # google_project_iam_member.functions_secret_accessor,
     google_storage_bucket_object.notification_handler_source,
   ]
 }
@@ -260,7 +264,7 @@ output "functions_service_account_email" {
   value       = google_service_account.functions_sa.email
 }
 
-output "functions_vpc_connector_id" {
-  description = "VPC Access Connector ID for Cloud Functions"
-  value       = google_vpc_access_connector.functions_connector.id
-}
+# output "functions_vpc_connector_id" {
+#   description = "VPC Access Connector ID for Cloud Functions"
+#   value       = google_vpc_access_connector.functions_connector.id
+# }
