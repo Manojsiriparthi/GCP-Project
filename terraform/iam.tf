@@ -22,95 +22,98 @@ resource "google_service_account" "notification_handler" {
   ]
 }
 
-# API Handler - Cloud SQL Client Role
-resource "google_project_iam_member" "api_handler_sql_client" {
-  project = local.project_id
-  role    = "roles/cloudsql.client"
-  member  = "serviceAccount:${google_service_account.api_handler.email}"
-  
-  depends_on = [time_sleep.wait_for_api_propagation]
-}
+# IAM Roles disabled due to insufficient permissions on service account
+# These need to be assigned manually via GCP Console or gcloud commands:
+# gcloud projects add-iam-policy-binding PROJECT_ID --member=serviceAccount:api-handler-sa@PROJECT_ID.iam.gserviceaccount.com --role=roles/cloudsql.client
+# gcloud projects add-iam-policy-binding PROJECT_ID --member=serviceAccount:api-handler-sa@PROJECT_ID.iam.gserviceaccount.com --role=roles/logging.logWriter
+# gcloud projects add-iam-policy-binding PROJECT_ID --member=serviceAccount:api-handler-sa@PROJECT_ID.iam.gserviceaccount.com --role=roles/monitoring.metricWriter
+# gcloud projects add-iam-policy-binding PROJECT_ID --member=serviceAccount:api-handler-sa@PROJECT_ID.iam.gserviceaccount.com --role=roles/pubsub.publisher
+# gcloud projects add-iam-policy-binding PROJECT_ID --member=serviceAccount:api-handler-sa@PROJECT_ID.iam.gserviceaccount.com --role=roles/secretmanager.secretAccessor
+# gcloud projects add-iam-policy-binding PROJECT_ID --member=serviceAccount:notification-handler-sa@PROJECT_ID.iam.gserviceaccount.com --role=roles/cloudsql.client
+# gcloud projects add-iam-policy-binding PROJECT_ID --member=serviceAccount:notification-handler-sa@PROJECT_ID.iam.gserviceaccount.com --role=roles/logging.logWriter
+# gcloud projects add-iam-policy-binding PROJECT_ID --member=serviceAccount:notification-handler-sa@PROJECT_ID.iam.gserviceaccount.com --role=roles/monitoring.metricWriter
+# gcloud projects add-iam-policy-binding PROJECT_ID --member=serviceAccount:notification-handler-sa@PROJECT_ID.iam.gserviceaccount.com --role=roles/pubsub.publisher
+# gcloud projects add-iam-policy-binding PROJECT_ID --member=serviceAccount:notification-handler-sa@PROJECT_ID.iam.gserviceaccount.com --role=roles/secretmanager.secretAccessor
 
-# API Handler - Logging Writer Role
-resource "google_project_iam_member" "api_handler_logging_writer" {
-  project = local.project_id
-  role    = "roles/logging.logWriter"
-  member  = "serviceAccount:${google_service_account.api_handler.email}"
-  
-  depends_on = [time_sleep.wait_for_api_propagation]
-}
-
-# API Handler - Monitoring Metric Writer Role
-resource "google_project_iam_member" "api_handler_monitoring_writer" {
-  project = local.project_id
-  role    = "roles/monitoring.metricWriter"
-  member  = "serviceAccount:${google_service_account.api_handler.email}"
-  
-  depends_on = [time_sleep.wait_for_api_propagation]
-}
-
-# API Handler - Pub/Sub Publisher Role
-resource "google_project_iam_member" "api_handler_pubsub_publisher" {
-  project = local.project_id
-  role    = "roles/pubsub.publisher"
-  member  = "serviceAccount:${google_service_account.api_handler.email}"
-  
-  depends_on = [time_sleep.wait_for_api_propagation]
-}
-
-# API Handler - Secret Accessor Role
-resource "google_project_iam_member" "api_handler_secret_accessor" {
-  project = local.project_id
-  role    = "roles/secretmanager.secretAccessor"
-  member  = "serviceAccount:${google_service_account.api_handler.email}"
-  
-  depends_on = [time_sleep.wait_for_api_propagation]
-}
-
-# Notification Handler - Cloud SQL Client Role
-resource "google_project_iam_member" "notification_handler_sql_client" {
-  project = local.project_id
-  role    = "roles/cloudsql.client"
-  member  = "serviceAccount:${google_service_account.notification_handler.email}"
-  
-  depends_on = [time_sleep.wait_for_api_propagation]
-}
-
-# Notification Handler - Logging Writer Role
-resource "google_project_iam_member" "notification_handler_logging_writer" {
-  project = local.project_id
-  role    = "roles/logging.logWriter"
-  member  = "serviceAccount:${google_service_account.notification_handler.email}"
-  
-  depends_on = [time_sleep.wait_for_api_propagation]
-}
-
-# Notification Handler - Monitoring Metric Writer Role
-resource "google_project_iam_member" "notification_handler_monitoring_writer" {
-  project = local.project_id
-  role    = "roles/monitoring.metricWriter"
-  member  = "serviceAccount:${google_service_account.notification_handler.email}"
-  
-  depends_on = [time_sleep.wait_for_api_propagation]
-}
-
-# Notification Handler - Pub/Sub Publisher Role
-resource "google_project_iam_member" "notification_handler_pubsub_publisher" {
-  project = local.project_id
-  role    = "roles/pubsub.publisher"
-  member  = "serviceAccount:${google_service_account.notification_handler.email}"
-  
-  depends_on = [time_sleep.wait_for_api_propagation]
-}
-
-# Notification Handler - Secret Accessor Role
-resource "google_project_iam_member" "notification_handler_secret_accessor" {
-  project = local.project_id
-  role    = "roles/secretmanager.secretAccessor"
-  member  = "serviceAccount:${google_service_account.notification_handler.email}"
-  
-  depends_on = [time_sleep.wait_for_api_propagation]
-}
+# resource "google_project_iam_member" "api_handler_sql_client" {
+#   project = local.project_id
+#   role    = "roles/cloudsql.client"
+#   member  = "serviceAccount:${google_service_account.api_handler.email}"
+#   
+#   depends_on = [time_sleep.wait_for_api_propagation]
+# }
+#
+# resource "google_project_iam_member" "api_handler_logging_writer" {
+#   project = local.project_id
+#   role    = "roles/logging.logWriter"
+#   member  = "serviceAccount:${google_service_account.api_handler.email}"
+#   
+#   depends_on = [time_sleep.wait_for_api_propagation]
+# }
+#
+# resource "google_project_iam_member" "api_handler_monitoring_writer" {
+#   project = local.project_id
+#   role    = "roles/monitoring.metricWriter"
+#   member  = "serviceAccount:${google_service_account.api_handler.email}"
+#   
+#   depends_on = [time_sleep.wait_for_api_propagation]
+# }
+#
+# resource "google_project_iam_member" "api_handler_pubsub_publisher" {
+#   project = local.project_id
+#   role    = "roles/pubsub.publisher"
+#   member  = "serviceAccount:${google_service_account.api_handler.email}"
+#   
+#   depends_on = [time_sleep.wait_for_api_propagation]
+# }
+#
+# resource "google_project_iam_member" "api_handler_secret_accessor" {
+#   project = local.project_id
+#   role    = "roles/secretmanager.secretAccessor"
+#   member  = "serviceAccount:${google_service_account.api_handler.email}"
+#   
+#   depends_on = [time_sleep.wait_for_api_propagation]
+# }
+#
+# resource "google_project_iam_member" "notification_handler_sql_client" {
+#   project = local.project_id
+#   role    = "roles/cloudsql.client"
+#   member  = "serviceAccount:${google_service_account.notification_handler.email}"
+#   
+#   depends_on = [time_sleep.wait_for_api_propagation]
+# }
+#
+# resource "google_project_iam_member" "notification_handler_logging_writer" {
+#   project = local.project_id
+#   role    = "roles/logging.logWriter"
+#   member  = "serviceAccount:${google_service_account.notification_handler.email}"
+#   
+#   depends_on = [time_sleep.wait_for_api_propagation]
+# }
+#
+# resource "google_project_iam_member" "notification_handler_monitoring_writer" {
+#   project = local.project_id
+#   role    = "roles/monitoring.metricWriter"
+#   member  = "serviceAccount:${google_service_account.notification_handler.email}"
+#   
+#   depends_on = [time_sleep.wait_for_api_propagation]
+# }
+#
+# resource "google_project_iam_member" "notification_handler_pubsub_publisher" {
+#   project = local.project_id
+#   role    = "roles/pubsub.publisher"
+#   member  = "serviceAccount:${google_service_account.notification_handler.email}"
+#   
+#   depends_on = [time_sleep.wait_for_api_propagation]
+# }
+#
+# resource "google_project_iam_member" "notification_handler_secret_accessor" {
+#   project = local.project_id
+#   role    = "roles/secretmanager.secretAccessor"
+#   member  = "serviceAccount:${google_service_account.notification_handler.email}"
+#   
+#   depends_on = [time_sleep.wait_for_api_propagation]
+# }
 
 # Outputs
 output "api_handler_service_account_email" {

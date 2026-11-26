@@ -16,50 +16,53 @@ resource "google_service_account" "functions_sa" {
   ]
 }
 
-# Cloud Functions - Pub/Sub Subscriber Role
-resource "google_project_iam_member" "functions_pubsub_subscriber" {
-  project = local.project_id
-  role    = "roles/pubsub.subscriber"
-  member  = "serviceAccount:${google_service_account.functions_sa.email}"
-  
-  depends_on = [time_sleep.wait_for_api_propagation]
-}
+# Cloud Functions IAM roles disabled due to insufficient permissions on service account
+# These need to be assigned manually via GCP Console or gcloud commands:
+# gcloud projects add-iam-policy-binding PROJECT_ID --member=serviceAccount:cloud-functions-sa@PROJECT_ID.iam.gserviceaccount.com --role=roles/pubsub.subscriber
+# gcloud projects add-iam-policy-binding PROJECT_ID --member=serviceAccount:cloud-functions-sa@PROJECT_ID.iam.gserviceaccount.com --role=roles/cloudsql.client
+# gcloud projects add-iam-policy-binding PROJECT_ID --member=serviceAccount:cloud-functions-sa@PROJECT_ID.iam.gserviceaccount.com --role=roles/secretmanager.secretAccessor
+# gcloud projects add-iam-policy-binding PROJECT_ID --member=serviceAccount:cloud-functions-sa@PROJECT_ID.iam.gserviceaccount.com --role=roles/logging.logWriter
+# gcloud projects add-iam-policy-binding PROJECT_ID --member=serviceAccount:cloud-functions-sa@PROJECT_ID.iam.gserviceaccount.com --role=roles/pubsub.publisher
 
-# Cloud Functions - Cloud SQL Client Role
-resource "google_project_iam_member" "functions_cloudsql_client" {
-  project = local.project_id
-  role    = "roles/cloudsql.client"
-  member  = "serviceAccount:${google_service_account.functions_sa.email}"
-  
-  depends_on = [time_sleep.wait_for_api_propagation]
-}
-
-# Cloud Functions - Secret Accessor Role
-resource "google_project_iam_member" "functions_secret_accessor" {
-  project = local.project_id
-  role    = "roles/secretmanager.secretAccessor"
-  member  = "serviceAccount:${google_service_account.functions_sa.email}"
-  
-  depends_on = [time_sleep.wait_for_api_propagation]
-}
-
-# Cloud Functions - Logging Writer Role
-resource "google_project_iam_member" "functions_logging_writer" {
-  project = local.project_id
-  role    = "roles/logging.logWriter"
-  member  = "serviceAccount:${google_service_account.functions_sa.email}"
-  
-  depends_on = [time_sleep.wait_for_api_propagation]
-}
-
-# Cloud Functions - Pub/Sub Publisher Role
-resource "google_project_iam_member" "functions_pubsub_publisher" {
-  project = local.project_id
-  role    = "roles/pubsub.publisher"
-  member  = "serviceAccount:${google_service_account.functions_sa.email}"
-  
-  depends_on = [time_sleep.wait_for_api_propagation]
-}
+# resource "google_project_iam_member" "functions_pubsub_subscriber" {
+#   project = local.project_id
+#   role    = "roles/pubsub.subscriber"
+#   member  = "serviceAccount:${google_service_account.functions_sa.email}"
+#   
+#   depends_on = [time_sleep.wait_for_api_propagation]
+# }
+#
+# resource "google_project_iam_member" "functions_cloudsql_client" {
+#   project = local.project_id
+#   role    = "roles/cloudsql.client"
+#   member  = "serviceAccount:${google_service_account.functions_sa.email}"
+#   
+#   depends_on = [time_sleep.wait_for_api_propagation]
+# }
+#
+# resource "google_project_iam_member" "functions_secret_accessor" {
+#   project = local.project_id
+#   role    = "roles/secretmanager.secretAccessor"
+#   member  = "serviceAccount:${google_service_account.functions_sa.email}"
+#   
+#   depends_on = [time_sleep.wait_for_api_propagation]
+# }
+#
+# resource "google_project_iam_member" "functions_logging_writer" {
+#   project = local.project_id
+#   role    = "roles/logging.logWriter"
+#   member  = "serviceAccount:${google_service_account.functions_sa.email}"
+#   
+#   depends_on = [time_sleep.wait_for_api_propagation]
+# }
+#
+# resource "google_project_iam_member" "functions_pubsub_publisher" {
+#   project = local.project_id
+#   role    = "roles/pubsub.publisher"
+#   member  = "serviceAccount:${google_service_account.functions_sa.email}"
+#   
+#   depends_on = [time_sleep.wait_for_api_propagation]
+# }
 
 # =============================================================
 # VPC ACCESS CONNECTOR FOR CLOUD FUNCTIONS
@@ -70,19 +73,23 @@ resource "google_compute_network" "functions_network" {
   auto_create_subnetworks = true
 }
 
-resource "google_vpc_access_connector" "functions_connector" {
-  name          = "functions-connector"
-  region        = local.region
-  network       = google_compute_network.functions_network.name
-  ip_cidr_range = "10.8.0.0/28"
-  min_instances = 2
-  max_instances = 10
+# VPC Access Connector disabled due to GCP internal error (Error code 13)
+# Can be created manually via GCP Console or gcloud:
+# gcloud compute networks vpc-access connectors create functions-connector --region=us-central1 --subnet=default --min-instances=2 --max-instances=10
 
-  depends_on = [
-    google_compute_network.functions_network,
-    time_sleep.wait_for_api_propagation
-  ]
-}
+# resource "google_vpc_access_connector" "functions_connector" {
+#   name          = "functions-connector"
+#   region        = local.region
+#   network       = google_compute_network.functions_network.name
+#   ip_cidr_range = "10.8.0.0/28"
+#   min_instances = 2
+#   max_instances = 10
+#
+#   depends_on = [
+#     google_compute_network.functions_network,
+#     time_sleep.wait_for_api_propagation
+#   ]
+# }
 
 # =============================================================
 # PROCESSING HANDLER
