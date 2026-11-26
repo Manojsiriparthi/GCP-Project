@@ -2,16 +2,21 @@
 
 ## ✅ Latest Fixes (2026-11-26)
 
-**Two additional issues have been fixed:**
+**Three additional issues have been fixed:**
 
 1. **Deprecated `require_ssl` argument** (cloud_sql.tf)
-   - Changed to modern `ssl_mode = "REQUIRE"`
+   - Changed to modern `ssl_mode = "ENCRYPTED_ONLY"`
+   - Valid ssl_mode values: "ALLOW_UNENCRYPTED_AND_ENCRYPTED", "ENCRYPTED_ONLY", "TRUSTED_CLIENT_CERTIFICATE_REQUIRED"
    - Now forward-compatible with latest Terraform provider
 
 2. **Authentication scope errors for logging metrics**
    - Added automatic state cleanup in deploy.sh
    - Removes stale logging metrics before deployment
    - Prevents "insufficient authentication scopes" errors
+
+3. **Invalid ssl_mode value**
+   - Fixed `ssl_mode = "REQUIRE"` → `ssl_mode = "ENCRYPTED_ONLY"`
+   - Requires all connections to use encryption (matches original intent)
 
 **Result:** Fully automated, error-free deployment ready to run!
 

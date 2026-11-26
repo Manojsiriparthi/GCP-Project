@@ -24,7 +24,7 @@ resource "google_sql_database_instance" "bank_app" {
     }
 
     ip_configuration {
-      ssl_mode     = "REQUIRE"
+      ssl_mode     = "ENCRYPTED_ONLY"
       ipv4_enabled = true
     }
 
