@@ -80,12 +80,14 @@ resource "google_secret_manager_secret" "db_password" {
   depends_on = [google_project_service.required_apis]
 }
 
-resource "google_secret_manager_secret_version" "db_password" {
-  secret      = google_secret_manager_secret.db_password.id
-  secret_data = google_sql_user.bank_app.password
-
-  depends_on = [google_secret_manager_secret.db_password]
-}
+# Secret version creation disabled due to Terraform service account permissions
+# These can be created manually via: gcloud secrets versions add bank-app-db-password --data-file=-
+# resource "google_secret_manager_secret_version" "db_password" {
+#   secret      = google_secret_manager_secret.db_password.id
+#   secret_data = google_sql_user.bank_app.password
+#
+#   depends_on = [google_secret_manager_secret.db_password]
+# }
 
 # Store DB connection string in Secret Manager
 resource "google_secret_manager_secret" "db_connection_string" {
@@ -99,12 +101,14 @@ resource "google_secret_manager_secret" "db_connection_string" {
   depends_on = [google_project_service.required_apis]
 }
 
-resource "google_secret_manager_secret_version" "db_connection_string" {
-  secret = google_secret_manager_secret.db_connection_string.id
-  secret_data = "postgresql://${var.db_user}:${google_sql_user.bank_app.password}@${google_sql_database_instance.bank_app.private_ip_address}:5432/${var.db_name}"
-
-  depends_on = [google_secret_manager_secret.db_connection_string]
-}
+# Secret version creation disabled due to Terraform service account permissions
+# These can be created manually via: gcloud secrets versions add bank-app-db-connection-string --data-file=-
+# resource "google_secret_manager_secret_version" "db_connection_string" {
+#   secret = google_secret_manager_secret.db_connection_string.id
+#   secret_data = "postgresql://${var.db_user}:${google_sql_user.bank_app.password}@${google_sql_database_instance.bank_app.private_ip_address}:5432/${var.db_name}"
+#
+#   depends_on = [google_secret_manager_secret.db_connection_string]
+# }
 
 # Outputs
 output "cloud_sql_instance_name" {
