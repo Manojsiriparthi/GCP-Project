@@ -1,18 +1,15 @@
 #!/bin/bash
 
 ################################################################################
-# 🚀 GCP BANK APPLICATION - END-TO-END DEPLOYMENT SCRIPT
+# 🚀 GCP BANK APPLICATION - COMPLETE END-TO-END DEPLOYMENT SCRIPT
 # 
-# This script automates the complete deployment of the GCP Bank Application:
-# 1. Validates GCP environment
-# 2. Configures Terraform variables
-# 3. Deploys infrastructure (Terraform)
-# 4. Uploads frontend to Cloud Storage
-# 5. Enables web hosting
-# 6. Deploys backend Cloud Functions
-# 7. Creates database schemas
-# 8. Runs smoke & integration tests
-# 9. Verifies all components
+# This script automates the complete deployment:
+# 1. Automatic authentication setup (gcloud auth application-default login)
+# 2. Terraform initialization, validation, planning, and apply
+# 3. Uploads frontend to Cloud Storage
+# 4. Deploys backend Cloud Functions
+# 5. Creates database schemas
+# 6. Runs smoke & integration tests
 #
 # Usage: bash deployment/deploy.sh
 ################################################################################
@@ -36,7 +33,7 @@ section_header() {
     echo -e "${BLUE}=================================================================================${NC}\n"
 }
 
-section_header "STEP 1: VALIDATING GCP ENVIRONMENT"
+section_header "STEP 0: AUTOMATIC AUTHENTICATION SETUP"
 
 log_info "Checking if gcloud CLI is installed..."
 if ! command -v gcloud &> /dev/null; then
@@ -44,6 +41,23 @@ if ! command -v gcloud &> /dev/null; then
     exit 1
 fi
 log_success "gcloud CLI found"
+
+log_info "Setting up Application Default Credentials..."
+log_warning "This will open your browser for authentication. Please approve the request."
+sleep 2
+
+# Check if already authenticated
+CURRENT_ACCOUNT=$(gcloud config get-value account 2>/dev/null || echo "")
+
+if [ -z "$CURRENT_ACCOUNT" ] || [ "$CURRENT_ACCOUNT" == "None" ]; then
+    log_info "No active account found. Running authentication..."
+    gcloud auth application-default login
+    log_success "Authentication completed"
+else
+    log_success "Already authenticated as: $CURRENT_ACCOUNT"
+fi
+
+section_header "STEP 1: VALIDATING GCP ENVIRONMENT"
 
 log_info "Checking if Terraform is installed..."
 if ! command -v terraform &> /dev/null; then
@@ -96,7 +110,6 @@ SERVICE_ACCOUNT_PREFIX="gcp-bank"
 log_info "Project ID: $GCP_PROJECT_ID"
 log_info "Region: $GCP_REGION"
 log_info "Database User: $DB_USER"
-log_info "Database Password: ****** (India@15081947)"
 log_info "Frontend Bucket: $BUCKET_NAME"
 
 log_info "Creating terraform.tfvars..."
@@ -104,6 +117,8 @@ cat > "$TERRAFORM_DIR/terraform.tfvars" << EOF
 project_id              = "$GCP_PROJECT_ID"
 region                  = "$GCP_REGION"
 zone                    = "$GCP_ZONE"
+gcp_project_id          = "$GCP_PROJECT_ID"
+gcp_region              = "$GCP_REGION"
 app_name                = "gcp-bank"
 environment             = "production"
 
@@ -111,6 +126,8 @@ db_instance_name        = "gcp-bank-db"
 db_username             = "$DB_USER"
 db_password             = "$DB_PASSWORD"
 db_database_name        = "banking_db"
+db_name                 = "banking_db"
+db_user                 = "$DB_USER"
 db_tier                 = "db-f1-micro"
 
 storage_bucket_name     = "$BUCKET_NAME"
@@ -128,25 +145,41 @@ notification_sa_name    = "${SERVICE_ACCOUNT_PREFIX}-notification"
 
 enable_monitoring       = true
 alert_email             = "$GCP_ACCOUNT"
+
+labels = {
+  "app"         = "gcp-bank-app"
+  "managed_by"  = "terraform"
+  "environment" = "production"
+  "team"        = "engineering"
+}
+
+enable_least_privilege = true
 EOF
 
 log_success "terraform.tfvars created successfully"
 
-section_header "STEP 3: DEPLOYING INFRASTRUCTURE WITH TERRAFORM"
+section_header "STEP 3: AUTOMATIC TERRAFORM DEPLOYMENT"
 
 cd "$TERRAFORM_DIR"
 
-log_info "Running terraform init..."
+log_info "Step 3.1: Initializing Terraform..."
 terraform init -upgrade
+log_success "Terraform initialized"
 
-log_info "Running terraform plan..."
-terraform plan -out=tfplan
+log_info "Step 3.2: Validating Terraform configuration..."
+terraform validate
+log_success "Configuration is valid"
 
-log_info "Applying Terraform configuration..."
-log_warning "This will create resources in GCP. Proceeding in 5 seconds..."
-sleep 5
+log_info "Step 3.3: Running terraform plan..."
+terraform plan -out=tfplan -auto-approve
+log_success "Plan created successfully"
 
-terraform apply tfplan
+log_info "Step 3.4: Applying Terraform configuration..."
+log_warning "⏳ This will create 49 resources. This takes 15-30 minutes..."
+sleep 3
+
+terraform apply -auto-approve tfplan
+log_success "✅ Infrastructure deployed successfully!"
 
 log_info "Extracting Terraform outputs..."
 FRONTEND_BUCKET=$(terraform output -raw frontend_bucket_name 2>/dev/null || echo "$BUCKET_NAME")

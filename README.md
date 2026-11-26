@@ -1,5 +1,24 @@
 # GCP Bank Application - Queue-Based Architecture
 
+## 🚀 DEPLOYMENT INSTRUCTIONS
+
+**BEFORE YOU START**: Run this command to fix authentication errors:
+```bash
+gcloud auth application-default login
+```
+
+Then deploy:
+```bash
+cd terraform
+terraform init
+terraform apply
+# Type 'yes' when prompted
+```
+
+**Time Required**: 20-40 minutes
+
+---
+
 ## Overview
 
 A production-grade banking application built on Google Cloud Platform demonstrating queue-based async architecture (similar to AWS SQS pattern). The system handles user creation and payment transactions asynchronously through Pub/Sub messaging, with automatic notifications via email.

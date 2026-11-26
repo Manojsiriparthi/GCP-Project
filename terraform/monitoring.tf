@@ -190,26 +190,30 @@ resource "google_monitoring_dashboard" "bank_app" {
 }
 
 # Log-based Metric - Track Transaction Creation
-resource "google_logging_metric" "transaction_creation" {
-  name   = "transaction_creation"
-  filter = "resource.type=\"cloud_function\" jsonPayload.event=\"PAYMENT_CREATED\""
-
-  metric_descriptor {
-    metric_kind = "DELTA"
-    value_type  = "INT64"
-  }
-}
+# NOTE: Requires additional logging.admin scope - commented out for compute instance compatibility
+# Uncomment when using proper authentication (gcloud auth application-default login)
+# resource "google_logging_metric" "transaction_creation" {
+#   name   = "transaction_creation"
+#   filter = "resource.type=\"cloud_function\" jsonPayload.event=\"PAYMENT_CREATED\""
+#
+#   metric_descriptor {
+#     metric_kind = "DELTA"
+#     value_type  = "INT64"
+#   }
+# }
 
 # Log-based Metric - Track User Creation
-resource "google_logging_metric" "user_creation" {
-  name   = "user_creation"
-  filter = "resource.type=\"cloud_function\" jsonPayload.event=\"USER_CREATED\""
-
-  metric_descriptor {
-    metric_kind = "DELTA"
-    value_type  = "INT64"
-  }
-}
+# NOTE: Requires additional logging.admin scope - commented out for compute instance compatibility
+# Uncomment when using proper authentication (gcloud auth application-default login)
+# resource "google_logging_metric" "user_creation" {
+#   name   = "user_creation"
+#   filter = "resource.type=\"cloud_function\" jsonPayload.event=\"USER_CREATED\""
+#
+#   metric_descriptor {
+#     metric_kind = "DELTA"
+#     value_type  = "INT64"
+#   }
+# }
 
 # Outputs
 output "monitoring_dashboard_id" {
