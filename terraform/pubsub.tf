@@ -58,74 +58,90 @@ resource "google_pubsub_topic" "send_email" {
 # =============================================================
 
 # Processing Handler subscription
-resource "google_pubsub_subscription" "request_queue_subscription" {
-  name  = "request-queue-subscription"
-  topic = google_pubsub_topic.request_queue.name
+# Commented out: Requires Cloud Functions to be fully deployed with HTTPS trigger URLs
+# Can be created manually after Cloud Functions are deployed:
+# gcloud pubsub subscriptions create request-queue-subscription \
+#   --topic request-queue \
+#   --push-endpoint <PROCESSING_HANDLER_HTTPS_URL> \
+#   --dead-letter-topic request-queue-dlq \
+#   --max-delivery-attempts 5
 
-  # Push configuration to Cloud Function
-  push_config {
-    push_endpoint = google_cloudfunctions_function.processing_handler.https_trigger_url
-  }
-
-  # Dead Letter Policy
-  dead_letter_policy {
-    dead_letter_topic       = google_pubsub_topic.request_queue_dlq.id
-    max_delivery_attempts   = 5
-  }
-
-  # Retry policy
-  retry_policy {
-    minimum_backoff = "10s"
-    maximum_backoff = "600s"  # 10 minutes
-  }
-
-  ack_deadline_seconds    = 60
-  message_retention_duration = "604800s"  # 7 days
-
-  labels = {
-    environment = "production"
-    function    = "processing-handler"
-  }
-
-  depends_on = [
-    google_cloudfunctions_function.processing_handler
-  ]
-}
+# resource "google_pubsub_subscription" "request_queue_subscription" {
+#   name  = "request-queue-subscription"
+#   topic = google_pubsub_topic.request_queue.name
+#
+#   # Push configuration to Cloud Function
+#   push_config {
+#     push_endpoint = google_cloudfunctions_function.processing_handler.https_trigger_url
+#   }
+#
+#   # Dead Letter Policy
+#   dead_letter_policy {
+#     dead_letter_topic       = google_pubsub_topic.request_queue_dlq.id
+#     max_delivery_attempts   = 5
+#   }
+#
+#   # Retry policy
+#   retry_policy {
+#     minimum_backoff = "10s"
+#     maximum_backoff = "600s"  # 10 minutes
+#   }
+#
+#   ack_deadline_seconds    = 60
+#   message_retention_duration = "604800s"  # 7 days
+#
+#   labels = {
+#     environment = "production"
+#     function    = "processing-handler"
+#   }
+#
+#   depends_on = [
+#     google_cloudfunctions_function.processing_handler
+#   ]
+# }
 
 # Notification Handler subscription
-resource "google_pubsub_subscription" "notification_queue_subscription" {
-  name  = "notification-queue-subscription"
-  topic = google_pubsub_topic.notification_queue.name
+# Commented out: Requires Cloud Functions to be fully deployed with HTTPS trigger URLs
+# Can be created manually after Cloud Functions are deployed:
+# gcloud pubsub subscriptions create notification-queue-subscription \
+#   --topic notification-queue \
+#   --push-endpoint <NOTIFICATION_HANDLER_HTTPS_URL> \
+#   --dead-letter-topic notification-queue-dlq \
+#   --max-delivery-attempts 5
 
-  # Push configuration to Cloud Function
-  push_config {
-    push_endpoint = google_cloudfunctions_function.notification_handler.https_trigger_url
-  }
-
-  # Dead Letter Policy
-  dead_letter_policy {
-    dead_letter_topic       = google_pubsub_topic.notification_queue_dlq.id
-    max_delivery_attempts   = 5
-  }
-
-  # Retry policy
-  retry_policy {
-    minimum_backoff = "10s"
-    maximum_backoff = "600s"
-  }
-
-  ack_deadline_seconds    = 60
-  message_retention_duration = "604800s"
-
-  labels = {
-    environment = "production"
-    function    = "notification-handler"
-  }
-
-  depends_on = [
-    google_cloudfunctions_function.notification_handler
-  ]
-}
+# resource "google_pubsub_subscription" "notification_queue_subscription" {
+#   name  = "notification-queue-subscription"
+#   topic = google_pubsub_topic.notification_queue.name
+#
+#   # Push configuration to Cloud Function
+#   push_config {
+#     push_endpoint = google_cloudfunctions_function.notification_handler.https_trigger_url
+#   }
+#
+#   # Dead Letter Policy
+#   dead_letter_policy {
+#     dead_letter_topic       = google_pubsub_topic.notification_queue_dlq.id
+#     max_delivery_attempts   = 5
+#   }
+#
+#   # Retry policy
+#   retry_policy {
+#     minimum_backoff = "10s"
+#     maximum_backoff = "600s"
+#   }
+#
+#   ack_deadline_seconds    = 60
+#   message_retention_duration = "604800s"
+#
+#   labels = {
+#     environment = "production"
+#     function    = "notification-handler"
+#   }
+#
+#   depends_on = [
+#     google_cloudfunctions_function.notification_handler
+#   ]
+# }
 
 # DLQ subscriptions (for monitoring/manual processing)
 resource "google_pubsub_subscription" "request_queue_dlq_subscription" {
@@ -168,12 +184,13 @@ output "notification_queue_topic_name" {
   description = "Name of the notification queue topic"
 }
 
-output "request_queue_subscription_name" {
-  value       = google_pubsub_subscription.request_queue_subscription.name
-  description = "Name of the request queue subscription"
-}
-
-output "notification_queue_subscription_name" {
-  value       = google_pubsub_subscription.notification_queue_subscription.name
-  description = "Name of the notification queue subscription"
-}
+# Subscription outputs - commented out because subscriptions are disabled
+# output "request_queue_subscription_name" {
+#   value       = google_pubsub_subscription.request_queue_subscription.name
+#   description = "Name of the request queue subscription"
+# }
+#
+# output "notification_queue_subscription_name" {
+#   value       = google_pubsub_subscription.notification_queue_subscription.name
+#   description = "Name of the notification queue subscription"
+# }
