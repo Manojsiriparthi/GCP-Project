@@ -211,7 +211,7 @@ if [ -z "$FRONTEND_BUCKET" ]; then
 else
     log_success "Frontend bucket found: $FRONTEND_BUCKET"
     
-    log_info "Building frontend application (if needed)..."
+    log_info "Building frontend application..."
     cd "$FRONTEND_DIR"
     
     if [ -f "package.json" ]; then
@@ -227,30 +227,50 @@ else
             log_success "Frontend built successfully"
         fi
         
-        BUILD_DIR="build"
-        if [ ! -d "$BUILD_DIR" ]; then
+        # Determine which build directory exists
+        BUILD_DIR=""
+        if [ -d "build" ]; then
+            BUILD_DIR="build"
+        elif [ -d "dist" ]; then
             BUILD_DIR="dist"
-        fi
-        if [ ! -d "$BUILD_DIR" ]; then
+        elif [ -d "public" ]; then
             BUILD_DIR="public"
         fi
-    else
-        BUILD_DIR="public"
-    fi
-    
-    log_info "Uploading frontend files to Cloud Storage..."
-    if [ -d "$BUILD_DIR" ]; then
+        
+        if [ -z "$BUILD_DIR" ]; then
+            log_error "No build output directory found (checked: build/, dist/, public/)"
+            exit 1
+        fi
+        
+        log_success "Using build directory: $BUILD_DIR"
+        
+        # Count files
+        FILE_COUNT=$(find "$BUILD_DIR" -type f | wc -l)
+        log_info "Found $FILE_COUNT files to upload"
+        
+        # List some files
+        log_info "Sample files:"
+        find "$BUILD_DIR" -type f | head -10 | sed 's/^/  /'
+        
+        log_info "Uploading all frontend files to gs://$FRONTEND_BUCKET/..."
+        
+        # Upload all files recursively with proper handling
         gcloud storage cp "$BUILD_DIR/**" "gs://$FRONTEND_BUCKET/" \
             --recursive \
             --project=$GCP_PROJECT_ID \
-            2>/dev/null || log_warning "Some files could not be uploaded"
-        log_success "Frontend files uploaded successfully"
+            --no-clobber \
+            2>&1 | grep -v "skipped" || true
+        
+        log_success "✓ Frontend files uploaded successfully to Cloud Storage"
+        log_info "Total files uploaded: $FILE_COUNT"
+        
+        # Verify upload
+        UPLOADED_COUNT=$(gcloud storage ls --recursive "gs://$FRONTEND_BUCKET/" --project=$GCP_PROJECT_ID 2>/dev/null | wc -l)
+        log_success "Verified: $UPLOADED_COUNT files in bucket"
     else
-        log_error "Build directory not found: $BUILD_DIR"
+        log_error "package.json not found in $FRONTEND_DIR"
+        exit 1
     fi
-    
-    cd "$TERRAFORM_DIR"
-fi
 
 section_header "STEP 5: CONFIGURING BUCKET FOR PUBLIC WEB ACCESS"
 
@@ -263,27 +283,47 @@ else
         --project=$GCP_PROJECT_ID \
         2>/dev/null || log_warning "Could not update bucket access settings"
     
-    log_info "Setting object content types..."
-    # Set content types for common file types
-    gcloud storage objects update "gs://$FRONTEND_BUCKET/index.html" \
-        --content-type="text/html" \
-        --project=$GCP_PROJECT_ID \
-        2>/dev/null || true
+    log_info "Setting content types for all files..."
     
-    gcloud storage objects update "gs://$FRONTEND_BUCKET/**.js" \
-        --content-type="application/javascript" \
-        --project=$GCP_PROJECT_ID \
-        2>/dev/null || true
+    # Set content type for HTML files
+    log_info "  Setting HTML files to text/html..."
+    gcloud storage ls --recursive "gs://$FRONTEND_BUCKET/*.html" --project=$GCP_PROJECT_ID 2>/dev/null | while read file; do
+        gcloud storage objects update "$file" --content-type="text/html" --project=$GCP_PROJECT_ID 2>/dev/null || true
+    done
     
-    gcloud storage objects update "gs://$FRONTEND_BUCKET/**.css" \
-        --content-type="text/css" \
-        --project=$GCP_PROJECT_ID \
-        2>/dev/null || true
+    # Set content type for JavaScript files
+    log_info "  Setting JS files to application/javascript..."
+    gcloud storage ls --recursive "gs://$FRONTEND_BUCKET/*.js" --project=$GCP_PROJECT_ID 2>/dev/null | while read file; do
+        gcloud storage objects update "$file" --content-type="application/javascript" --project=$GCP_PROJECT_ID 2>/dev/null || true
+    done
     
-    gcloud storage objects update "gs://$FRONTEND_BUCKET/**.json" \
-        --content-type="application/json" \
-        --project=$GCP_PROJECT_ID \
-        2>/dev/null || true
+    # Set content type for CSS files
+    log_info "  Setting CSS files to text/css..."
+    gcloud storage ls --recursive "gs://$FRONTEND_BUCKET/*.css" --project=$GCP_PROJECT_ID 2>/dev/null | while read file; do
+        gcloud storage objects update "$file" --content-type="text/css" --project=$GCP_PROJECT_ID 2>/dev/null || true
+    done
+    
+    # Set content type for JSON files
+    log_info "  Setting JSON files to application/json..."
+    gcloud storage ls --recursive "gs://$FRONTEND_BUCKET/*.json" --project=$GCP_PROJECT_ID 2>/dev/null | while read file; do
+        gcloud storage objects update "$file" --content-type="application/json" --project=$GCP_PROJECT_ID 2>/dev/null || true
+    done
+    
+    # Set content types for images
+    log_info "  Setting image files..."
+    gcloud storage ls --recursive "gs://$FRONTEND_BUCKET/*.png" --project=$GCP_PROJECT_ID 2>/dev/null | while read file; do
+        gcloud storage objects update "$file" --content-type="image/png" --project=$GCP_PROJECT_ID 2>/dev/null || true
+    done
+    
+    gcloud storage ls --recursive "gs://$FRONTEND_BUCKET/*.jpg" --project=$GCP_PROJECT_ID 2>/dev/null | while read file; do
+        gcloud storage objects update "$file" --content-type="image/jpeg" --project=$GCP_PROJECT_ID 2>/dev/null || true
+    done
+    
+    gcloud storage ls --recursive "gs://$FRONTEND_BUCKET/*.svg" --project=$GCP_PROJECT_ID 2>/dev/null | while read file; do
+        gcloud storage objects update "$file" --content-type="image/svg+xml" --project=$GCP_PROJECT_ID 2>/dev/null || true
+    done
+    
+    log_success "Content types configured"
     
     log_info "Adding public read access to bucket..."
     gcloud storage buckets add-iam-policy-binding "gs://$FRONTEND_BUCKET" \
@@ -291,7 +331,7 @@ else
         --role=roles/storage.objectViewer \
         --project=$GCP_PROJECT_ID \
         --quiet \
-        2>/dev/null || log_warning "Could not add public access"
+        2>/dev/null || log_warning "Could not add public access (may already be configured)"
     
     log_info "Configuring bucket for web hosting..."
     gcloud storage buckets update "gs://$FRONTEND_BUCKET" \
