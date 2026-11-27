@@ -21,19 +21,19 @@ API.interceptors.response.use(
 
 export const userService = {
   createUser: (email, name) => 
-    API.post('/operations', {
+    API.post('/', {
       type: 'user',
       data: { email, name }
     }),
   
   createBulkUsers: (count) =>
-    API.post('/operations', {
+    API.post('/', {
       type: 'bulk',
       count
     }),
 
   getUserTransactions: (userId, limit = 50) =>
-    API.post('/operations', {
+    API.post('/', {
       type: 'history',
       user_id: userId,
       limit
@@ -42,7 +42,7 @@ export const userService = {
 
 export const paymentService = {
   createPayment: (fromUserId, toUserId, amount, description = '') =>
-    API.post('/operations', {
+    API.post('/', {
       type: 'payment',
       data: {
         from_user_id: fromUserId,
@@ -53,14 +53,14 @@ export const paymentService = {
     }),
 
   createBulkPayments: (count) =>
-    API.post('/operations', {
+    API.post('/', {
       type: 'bulk_payments',
       count
     })
 };
 
 export const healthService = {
-  check: () => API.get('/health')
+  check: () => API.post('/')
 };
 
 export default API;
