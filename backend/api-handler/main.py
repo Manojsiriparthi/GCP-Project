@@ -395,9 +395,9 @@ def api_handler(request: 'flask.Request') -> Tuple[str, int]:
         "Content-Type": "application/json"
     }
     
-    # Handle OPTIONS request
+    # Handle OPTIONS request (preflight)
     if request.method == "OPTIONS":
-        return "", 204
+        return "", 204, headers
     
     if request.method != "POST":
         return json.dumps({"success": False, "error": "Method not allowed"}), 405, headers
